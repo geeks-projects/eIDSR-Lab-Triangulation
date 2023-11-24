@@ -1,0 +1,179 @@
+---
+title: "Triangulation of eIDSR and Lab AFP cases"
+author: "Robinson"
+date: "20/11/2023"
+format: pptx
+execute: 
+  cache: true
+  echo: false
+  warning: false
+---
+
+## eIDSR national level AFP cases data by indicator
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+
+```{r}
+AFP_eIDSR_data <- read_xlsx("data/AFP Cases Notified and Investigated Aug_Nov 2023.xlsx", skip = 1)
+
+aug_variables <-  names(AFP_eIDSR_data |> select(2:6))
+sep_variables <-  names(AFP_eIDSR_data  |> select(7:11))
+oct_variables <-  names(AFP_eIDSR_data  |> select(12:16))
+nov_variables <-  names(AFP_eIDSR_data  |> select(17:21))
+
+AFP_eIDSR_data_clean <-  AFP_eIDSR_data  |> pivot_longer(cols = 2:21) |> 
+  mutate(period = case_when(name %in% aug_variables ~ "08/2023",
+                            name %in% sep_variables ~ "09/2023",
+                            name %in% oct_variables ~ "10/2023",
+                            name %in% nov_variables ~ "11/2023"
+                            ), 
+         period = my(period),
+         period = month(period,label = T,  abbr = T),
+         name = str_remove_all(name, "[:digit:]"),
+          name = str_remove_all(name, "\\."),
+         organisationunitname = str_remove(organisationunitname, " District"),
+         organisationunitname = str_to_title(organisationunitname)) |> 
+  pivot_wider(names_from = name, values_from = value) |> 
+  filter(organisationunitname != "Total")
+```
+
+
+```{r}
+AFP_eIDSR_data_natioal_level <- AFP_eIDSR_data_clean |> 
+  group_by(period) |> 
+  summarise(across(c("Suspected Polio (AFP)", contains("cases")) , sum, na.rm = T)) |>
+  pivot_longer(cols = `Suspected Polio (AFP)`:`Total AFP Cases with Outcomes`) 
+
+
+cols <- c("Nov" = "#253D5B", "Oct" = "#67697C", "Sep" = "#969696", "Aug" = "#B79D94")
+
+AFP_eIDSR_data_natioal_level |> 
+  ggplot(aes(x = name, y = value, fill = period)) +
+  scale_fill_manual(values = cols, name = "2023 Months")+
+  labs(title = NULL, 
+       x = "Indicator", 
+       y = "Cases")+
+  geom_col() +
+  coord_flip()+
+  theme(legend.position = "bottom")
+
+```
+
+## eIDSR national AFP cases reported by month
+
+```{r}
+AFP_eIDSR_data_natioal_level |> 
+   group_by(period) |> 
+  summarise(value = sum(value)) |> 
+   ggplot(aes(x = period, y = value,fill = period), show.legend = F ) +
+    geom_col() +
+  scale_fill_manual(values = cols)+
+  labs(title = NULL, 
+       x = "Month of 2023", 
+       y = "Numbers from eIDSR")+
+  geom_label(aes(label = value), col = "white",   size = 3, show.legend = F) +
+  annotate("label", x = 1.8, y = 45, 
+           label = stringr::str_wrap("Aug 2023, National and regional eISDR trainings")) +
+   theme(legend.position = "none")
+  
+  
+```
+
+## eIDSR District level AFP cases investaged from Sep to Nov 2023
+
+```{r}
+AFP_eIDSR_data_sep_nov <-  AFP_eIDSR_data_clean |> 
+  select(organisationunitname, period, `Total AFP Cases Investigated` ) |> 
+   filter(period != "Aug") |> 
+   filter(!is.na(`Total AFP Cases Investigated`))
+```
+
+```{r}
+AFP_eIDSR_data_sep_nov |> 
+  group_by(organisationunitname) |> 
+  summarise(`Total AFP Cases Investigated` = sum(`Total AFP Cases Investigated`)) |> 
+  ggplot(aes(x = reorder(organisationunitname, `Total AFP Cases Investigated` ),
+             y = `Total AFP Cases Investigated`))+
+geom_col(fill = "#67697C")+
+   labs(title = NULL, 
+       x = "Districts", 
+       y = "Cases")+
+  geom_label(aes(label = `Total AFP Cases Investigated`),   size = 3, show.legend = F) +
+  scale_fill_manual(values = cols)
+
+```
+
+## Lab National level AFP cases investigated by month
+
+
+```{r}
+lab_data_AFP <- read_xlsx("data/Measles and AFP cases by month and district Sept to Nov 2023 (1).xlsx",
+                      skip = 1,sheet = "AFP")
+
+lab_data_AFP_clean    <- lab_data_AFP |> 
+        select(-TOTAL) |> 
+        pivot_longer(cols = Sept:Nov, values_to = "cases_investigated", names_to = "period") |> 
+        mutate(`District Name` = str_to_title(`District Name`),
+               period = my(str_c(period, "-2023")),
+               period = month(period,label = T,  abbr = T)) |> 
+    filter(`District Name`  != "Total")
+```
+
+
+```{r}
+lab_data_AFP_clean |> 
+   group_by(period) |> 
+  summarise(cases_investigated = sum(cases_investigated, na.rm = T)) |> 
+  ggplot(aes(x = period, y = cases_investigated)) +
+  geom_col(aes(fill = period))+
+   labs(title = NULL, 
+       x = "Month of 2023", 
+       y = "Cases")+
+  geom_label(aes(label = cases_investigated),   size = 3, show.legend = F) +
+  scale_fill_manual(values = cols)+
+  theme(legend.position = "none")
+
+```
+
+
+## Lab District (20) level AFP cases investigated from Sep to Oct 2023
+
+```{r}
+lab_data_AFP_by_district <- lab_data_AFP_clean |> 
+   group_by(`District Name`) |> 
+  summarise(cases_investigated = sum(cases_investigated, na.rm = T)) |> 
+  arrange(desc(cases_investigated))
+```
+
+
+```{r}
+lab_data_AFP_by_district |> 
+  top_n(20, wt = cases_investigated) |> 
+ggplot(aes(x = fct_reorder(`District Name`, cases_investigated), y = cases_investigated)) +
+  geom_col(fill = "#67697C")+
+  coord_flip()+
+   labs(title = NULL, 
+       x = "Districts", 
+       y = "Cases")+
+  geom_label(aes(label = cases_investigated),   size = 2, show.legend = F) +
+  scale_fill_manual(values = cols)
+```
+## AFP cases investigated and reported to the Lab vs eIDSR by District
+
+
+```{r}
+AFP_data_joined <- AFP_eIDSR_data_sep_nov  |> 
+  left_join(lab_data_AFP_clean, 
+            by = c("organisationunitname" = "District Name", "period" = "period")) |> 
+  group_by(organisationunitname) |> 
+  summarise(`eIDSR` = sum(`Total AFP Cases Investigated`),
+            `Lab` = sum(cases_investigated))
+
+knitr::kable(AFP_data_joined)
+
+```
+

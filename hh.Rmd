@@ -1,0 +1,42 @@
+---
+title: "hhh"
+output:
+  word_document: default
+  pdf_document: default
+date: "2023-11-15"
+---
+
+Sensitivity, specificity, positive predictive value (PPV), and negative predictive value (NPV) are metrics used to assess the performance of a diagnostic test. These metrics are often presented in a 2x2 contingency table, which summarizes the outcomes of a diagnostic test compared to the true condition of the individuals being tested.
+
+Let's define these terms and illustrate them using a 2x2 contingency table:
+
+1. **Sensitivity (True Positive Rate or Recall):**
+   - Sensitivity measures the proportion of true positives among all individuals who actually have the condition.
+   - It is calculated as: \(\text{Sensitivity} = \frac{\text{True Positives}}{\text{True Positives + False Negatives}}\)
+
+2. **Specificity (True Negative Rate):**
+   - Specificity measures the proportion of true negatives among all individuals who do not have the condition.
+   - It is calculated as: \(\text{Specificity} = \frac{\text{True Negatives}}{\text{True Negatives + False Positives}}\)
+
+3. **Positive Predictive Value (Precision):**
+   - PPV measures the proportion of true positives among all individuals who tested positive.
+   - It is calculated as: \(\text{PPV} = \frac{\text{True Positives}}{\text{True Positives + False Positives}}\)
+
+4. **Negative Predictive Value:**
+   - NPV measures the proportion of true negatives among all individuals who tested negative.
+   - It is calculated as: \(\text{NPV} = \frac{\text{True Negatives}}{\text{True Negatives + False Negatives}}\)
+
+Here's a 2x2 contingency table for better illustration:
+
+\[
+\begin{array}{cc|cc}
+ & & \text{Actual Positive} & \text{Actual Negative} \\
+\hline
+\text{Test Positive} & \text{True Positive (TP)} & \text{False Positive (FP)} \\
+\text{Test Negative} & \text{False Negative (FN)} & \text{True Negative (TN)} \\
+\end{array}
+\]
+
+Using this table, the formulas for sensitivity, specificity, PPV, and NPV can be applied based on the counts in each cell.
+
+Remember that these metrics are essential for evaluating the overall performance and reliability of a diagnostic test.
